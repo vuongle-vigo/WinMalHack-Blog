@@ -2,7 +2,7 @@
 
 ### Table of Content
 1. [Giới thiệu](#giới-thiệu)
-2. [WiinAPI Hooking](#winapi-hooking)
+2. [WinAPI Hooking](#winapi-hooking)
 3. [Lấy mã máy syscall API](#get-asm-syscall)
 3. [Setup VS2022 để code ASM](#setup-vs2022-để-code-asm)
 4. [Code](#code)
