@@ -2,12 +2,16 @@
 
 ### Table of Content
 1. [Giới thiệu](#giới-thiệu)
-
+2. [Nirvana Debugging](#nirvana-debugging1)
+3. [NtSetInformationProcess](#ntsetinformationprocess)
+4. [Callback_thunk và Register syscall function](#callback-register)
+5. [Xử lý giá trị của r10 và rax trong callback function](#xử-lý-r10-rax)
+5. [Kết luận](#kết-luận)
 
 ### Giới thiệu <a name = "giới-thiệu"></a>
 Tiếp nối bài viết trước đã tìm hiểu về sử dụng Direct Syscall (link bài viết: [Direct Syscall Blog](https://github.com/vuongle-vigo/WinMalHack-Blog/blob/main/Bypass%20AV%20Hook%20-%20Direct%20Syscall/Bypass%20AV%20Hooking%20with%20Direct%20Syscall.md)), lần này chúng ta sẽ tìm hiểu kỹ thuật Nirvana Debugging, hiểu 1 cách ngắn gọn kỹ thuật này vẫn sẽ cho chúng ta thông tin của API được gọi kể cả nó được gọi bằng phương pháp nào.
 
-### Nirvana Debugging
+### Nirvana Debugging <a name = "nirvana-debugging1"></a>
 Kỹ thuật sẽ đặt 1 hook sau khi syscall được thực hiện, tức là kết quả của API đã được trả về, lúc này ta sẽ phân tích kết quả trả về để xem thông tin của API đã được gọi.
 ![Flow call API and return callback](images/map.png)
 </br>
@@ -47,7 +51,7 @@ NtSetInformationProcessfn(GetCurrentProcess(), ProcessInstrumentationCallback, &
 ```
 Trong đó *callback_thunk* là con trỏ đến hàm callback sẽ được gọi, là phần mã asm sẽ được nói đến ở phần dưới.
 
-## Callback_thunk và Register syscall function
+## Callback_thunk và Register syscall function <a name = "callback-register"></a>
 Điều bây giờ cần quan tâm là Sycall function trả về giá trị nào cần quan tâm và 
 phân tích giá trị đó thế nào, cùng nhìn lại mã asm của 1 Syscall đã nhắc đến trong bài trước  (link bài viết: [Direct Syscall Blog](https://github.com/vuongle-vigo/WinMalHack-Blog/blob/main/Bypass%20AV%20Hook%20-%20Direct%20Syscall/Bypass%20AV%20Hooking%20with%20Direct%20Syscall.md)):
 </br>
@@ -108,7 +112,7 @@ end
 </br>
 ```extern "C" __forceinline PVOID callback_thunk();```
 
-## Xử lý giá trị của r10 và rax trong callback function
+## Xử lý giá trị của r10 và rax trong callback function <a name = "xử-lý-r10-rax"></a>
 Thanh ghi *rax* và *r10* sau khi được trả về từ syscall được lưu 2 giá trị như sau:
 </br>
 - rax lưu kết quả trả về của syscall</br>
@@ -129,7 +133,7 @@ if (!SymInitialize(GetCurrentProcess(), NULL, TRUE)) {
 	return -1;
 }
 ```
-## Kết luận
+## Kết luận <a name = "kết-luận"></a>
 Dưới đây là kết quả sau khi mình test thử với *VirtualAlloc* và *VirtualProtect*
 ![result](images/result.png)
 Có thể thấy 2 hàm NT trên đã được in ra, kèm theo đó là 1 số hàm của chương trình chạy để kết thúc. Blog tiếp theo mình sẽ nói về sử dụng *NtSetInformationProcess* để inject shellcode vào tiến trình.
