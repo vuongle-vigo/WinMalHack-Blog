@@ -13,6 +13,7 @@ Tiếp nối bài viết trước đã tìm hiểu về sử dụng Direct Sysca
 
 ### Nirvana Debugging <a name = "nirvana-debugging1"></a>
 Kỹ thuật sẽ đặt 1 hook sau khi syscall được thực hiện, tức là kết quả của API đã được trả về, lúc này ta sẽ phân tích kết quả trả về để xem thông tin của API đã được gọi.
+
 ![Flow call API and return callback](images/map.png)
 </br>
 Như chúng ta thấy, **my_callback_hooking_fn** sẽ được đặt ngay sau khi **syscall function** trả về. 
@@ -119,12 +120,15 @@ Thanh ghi *rax* và *r10* sau khi được trả về từ syscall được lưu
 - r10 lưu địa chỉ gọi hàm ban đầu của syscall
 </br>
 Vậy việc đầu tiên ta sẽ debug xem *r10* sẽ trỏ về đâu
+
 ![debugr10](images/debugr10.png)
 *R10* có giá trị hiện tại là *0x00007FFFEFD8D2E4* đang trỏ đến lệnh *C3* như trên, vậy để có thể lấy được mã syscall ở *mov eax, 18h* ta thực hiện tính toán con trỏ đến sau lệnh *mov r10, rcx* (luôn không
 	thay đổi) để lấy giá trị này:
+
 ![getsyscall code](images/getsyscallcode.png)
 
 Phần còn lại sẽ sử dụng *SymFromAddr* API để lấy tên hàm thông qua con trỏ thanh ghi *R10*:
+
 ![symbol](images/symbol.png)
 *Lưu ý*: Để sử dụng được *SymFromAddr*, ta cần khởi tạo trước thông qua hàm dưới đây, cần gọi hàm khởi tạo trước khi gọi NtSetInformationProcess, hạn chế gọi các hàm như LoadLibrary ở giữa *SymFromAddr* và *SymInitialize*
 ```c
@@ -135,6 +139,7 @@ if (!SymInitialize(GetCurrentProcess(), NULL, TRUE)) {
 ```
 ## Kết luận <a name = "kết-luận"></a>
 Dưới đây là kết quả sau khi mình test thử với *VirtualAlloc* và *VirtualProtect*
+
 ![result](images/result.png)
 Có thể thấy 2 hàm NT trên đã được in ra, kèm theo đó là 1 số hàm của chương trình chạy để kết thúc. Blog tiếp theo mình sẽ nói về sử dụng *NtSetInformationProcess* để inject shellcode vào tiến trình.
 Source code mình đã up kèm file trên git tại folder code.
