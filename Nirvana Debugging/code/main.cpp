@@ -7,7 +7,7 @@
 #define ProcessInstrumentationCallback 40		//Use this code for intrumentation callback; non-docs;
 
 extern "C" __forceinline PVOID callback_thunk();
-
+//printf call NTAPI Writefile, therefore, the disable_recurs variable is needed to avoid the callback from being called again.
 bool disable_recurs = false;
 extern "C" unsigned int callback(unsigned __int64 r10, unsigned __int64 rax) {
 	if (!disable_recurs) {

@@ -137,6 +137,8 @@ if (!SymInitialize(GetCurrentProcess(), NULL, TRUE)) {
 	return -1;
 }
 ```
+Ngoài ra, ở trong callback có sử dụng 1 số API, theo mình debug với x64dbg thì printf có gọi đến NT WriteFile, vì vậy sẽ tạo ra 1 vòng lặp nữa. Đó là lý do mình sử dụng 
+biến *disable_recurs* nhằm tránh việc xảy ra vòng lặp.
 ## Kết luận <a name = "kết-luận"></a>
 Dưới đây là kết quả sau khi mình test thử với *VirtualAlloc* và *VirtualProtect*
 
