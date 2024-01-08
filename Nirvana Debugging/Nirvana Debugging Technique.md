@@ -68,7 +68,8 @@ ntdll!NtWriteVirtualMemory:
 00007fff`efd8d725 cd2e            int     2Eh
 00007fff`efd8d727 c3              ret
 ```
-Như ta thấy, có 2 giá trị được đẩy vào 2 thanh ghi **r10** và **eax**, trong đó, **r10** là địa chỉ gọi syscall, **eax** là syscall code của hàm này, vì vậy ta cần lấy giá trị 2 thanh
+Sau khi gọi syscall, có 2 giá trị được lưu trữ vào 2 thanh ghi *r10* và *rax*, trong đó *r10* là địa chỉ của lệnh ret ngay sau syscall, ở
+trên sẽ mang giá trị *00007fff`efd8d724*, còn *rax* sẽ là giá trị trả về của syscall, vì vậy ta cần lấy giá trị 2 thanh
 ghi này để phân tích. Để làm được điều này, sử dụng đoạn mã asm dưới đây:
 </br>
 **callback_thunk.asm**
