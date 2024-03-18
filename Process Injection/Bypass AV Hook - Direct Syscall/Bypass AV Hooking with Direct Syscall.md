@@ -24,28 +24,28 @@ Tuy nhiên, 1 số API sử dụng cơ chế Hook để theo dõi xem API . Cơ 
 Để bypass quá trình này, chúng ta có thể sử dụng kĩ thuật unhook dựa vào kĩ thuật hook của iredteam ở trên, hoặc gọi thẳng syscall tại kernelland.
 
 ### Lấy mã máy syscall API <a name = "get-asm-syscall"></a>
-Để xem mã máy của API, mình mở 1 tiến trình bất kì rồi thực hiện debug tiến trình đấy, mình sẽ thử tìm mã máy của WriteProcessMemory, hay NtWriteVirtualMemory trong ntdll.dll
+Để xem mã máy của API, mình mở 1 tiến trình bất kì rồi thực hiện debug tiến trình đấy, mình sẽ thử tìm mã máy của ReadProcessMemory, hay NtReadVirtualMemory trong ntdll.dll
 ```
-0:031> u NtWriteVirtualMemory
-ntdll!NtWriteVirtualMemory:
-00007fff`efd8d710 4c8bd1          mov     r10,rcx
-00007fff`efd8d713 b83a000000      mov     eax,3Ah
-00007fff`efd8d718 f604250803fe7f01 test    byte ptr [SharedUserData+0x308 (00000000`7ffe0308)],1
-00007fff`efd8d720 7503            jne     ntdll!NtWriteVirtualMemory+0x15 (00007fff`efd8d725)
-00007fff`efd8d722 0f05            syscall
-00007fff`efd8d724 c3              ret
-00007fff`efd8d725 cd2e            int     2Eh
-00007fff`efd8d727 c3              ret
+0:016> u NtReadVirtualMemory
+ntdll!NtReadVirtualMemory:
+00007ffe`73b8fb40 4c8bd1          mov     r10,rcx
+00007ffe`73b8fb43 b83f000000      mov     eax,3Fh
+00007ffe`73b8fb48 f604250803fe7f01 test    byte ptr [SharedUserData+0x308 (00000000`7ffe0308)],1
+00007ffe`73b8fb50 7503            jne     ntdll!NtReadVirtualMemory+0x15 (00007ffe`73b8fb55)
+00007ffe`73b8fb52 0f05            syscall
+00007ffe`73b8fb54 c3              ret
+00007ffe`73b8fb55 cd2e            int     2Eh
+00007ffe`73b8fb57 c3              ret
 ```
 
 Thực tế chúng ta chỉ cần quan tâm đến phần mã sau, đây là phần mã gọi syscall để thực hiện API
 ```
 mov     r10,rcx
-mov     eax,3Ah
+mov     eax,3Fh
 syscall
 ret
 ```
-**Lưu ý:** Tham số đầu vào của hàm sẽ lấy theo tham số của NtWriteVirtualMemory
+**Lưu ý:** Tham số đầu vào của hàm sẽ lấy theo tham số của NtReadVirtualMemory
 
 ### Setup VS2022 để code ASM <a name = "setup-vs2022-để-code-asm"></a>
 Để có thể biên dịch và chạy mã máy trên VS2022 chúng ta cần setup 1 số thứ như sau: 
@@ -61,20 +61,22 @@ Sau đó tạo 1 file .asm để lưu mã syscall, chuột phải vào file, ch�
 **syscall.asm**
 ```asm
 .code
-	SysNtWriteVirtualMemory proc
+	SysNtReadVirtualMemory proc
 		mov     r10,rcx
-		mov     eax,3Ah
+		mov     eax,3Fh
 		syscall
 		ret
-	SysNtWriteVirtualMemory endp
+	SysNtReadVirtualMemory endp
 end
 ```
 
 **main.c**
 ```c
 #include <Windows.h>
-//Signature of NtWriteVirtualMemory
-EXTERN_C NTSTATUS SysNtWriteVirtualMemory(
+#include <iostream>
+
+//Signature of NtReadVirtualMemory
+EXTERN_C NTSTATUS SysNtReadVirtualMemory(
 	HANDLE ProcessHandle,
 	PVOID BaseAddress,
 	PVOID Buffer,
@@ -83,7 +85,10 @@ EXTERN_C NTSTATUS SysNtWriteVirtualMemory(
 );
 
 int main() {
-	SysNtReadVirtualMemory(ProcessHandle, (PVOID)address2read, &buffer, 8, &byteRead);
+	BYTE buffer[8] = { 0 };
+	HANDLE hProc = GetModuleHandle(NULL);
+	SysNtReadVirtualMemory(hProc, (PVOID)hProc, &buffer, 8, NULL);
+	printf("%x", buffer);
 	return 0;
 }
 
