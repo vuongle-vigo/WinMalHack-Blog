@@ -1,2 +1,0 @@
-## AvosLocker Ransomeware
-
